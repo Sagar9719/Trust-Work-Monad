@@ -1,9 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useAccount } from 'wagmi'
-import { submitBidCommitment, TRUSTWORK_PROJECT_ID } from '@/lib/api'
-import { calculateCommitmentHash, formatTxHash } from '@/lib/utils'
+import { getProject, submitBidCommitment, TRUSTWORK_PROJECT_ID } from '@/lib/api'
+import { calculateCommitmentHash, formatTxHash, getAuctionPhase, getExplorerUrl } from '@/lib/utils'
 import Link from 'next/link'
 
 export default function BidPage() {
@@ -15,7 +15,21 @@ export default function BidPage() {
   const [loading, setLoading] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [txHash, setTxHash] = useState<string>('')
+  const [explorerUrl, setExplorerUrl] = useState<string>('')
   const [error, setError] = useState<string | null>(null)
+  const [bidWindowOpen, setBidWindowOpen] = useState(true)
+
+  useEffect(() => {
+    getProject(TRUSTWORK_PROJECT_ID).then((project) => {
+      const phase = getAuctionPhase(
+        project.auction.commit_deadline,
+        project.auction.reveal_deadline
+      )
+      setBidWindowOpen(phase === 'bidding')
+    }).catch((err) => {
+      console.error('Failed to check bid window:', err)
+    })
+  }, [])
 
   const handleCalculateHash = () => {
     if (!amount || !secret) {
@@ -49,6 +63,11 @@ export default function BidPage() {
       return
     }
 
+    if (!bidWindowOpen) {
+      setError('The commit window is closed. New bids cannot be submitted for this project.')
+      return
+    }
+
     setLoading(true)
     setError(null)
 
@@ -60,7 +79,9 @@ export default function BidPage() {
         commitmentHash,
       })
 
-      setTxHash(response.txHash || response.tx_hash || '')
+      const submittedTxHash = response.txHash || response.tx_hash || ''
+      setTxHash(submittedTxHash)
+      setExplorerUrl(response.explorer || (submittedTxHash ? getExplorerUrl(submittedTxHash) : ''))
       setSubmitted(true)
       setAmount('')
       setSecret('')
@@ -92,6 +113,11 @@ export default function BidPage() {
         <p className="text-gray-400 text-sm">
           Commit phase: Submit your bid amount and secret phrase. Your actual bid amount is hidden.
         </p>
+        {!bidWindowOpen && (
+          <p className="text-yellow-300 text-sm border-t border-gray-700 pt-2">
+            This project&apos;s commit window is closed. Watch for a new active project to submit a bid.
+          </p>
+        )}
       </div>
 
       {/* Wallet Connection */}
@@ -176,8 +202,8 @@ export default function BidPage() {
             ) : (
               <button
                 onClick={handleSubmitBid}
-                disabled={loading || !isConnected}
-                className={`button w-full ${loading || !isConnected ? 'opacity-50 cursor-not-allowed' : ''}`}
+                disabled={loading || !isConnected || !bidWindowOpen}
+                className={`button w-full ${loading || !isConnected || !bidWindowOpen ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 {loading ? 'Submitting...' : 'Submit Bid Commitment'}
               </button>
@@ -203,17 +229,23 @@ export default function BidPage() {
 
           <div className="bg-gray-900 p-3 rounded border border-gray-700 space-y-2">
             <p className="text-sm text-gray-400">Transaction Hash:</p>
-            <a
-              href={`${process.env.NEXT_PUBLIC_EXPLORER_URL}/tx/${txHash}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-400 hover:text-blue-300 text-xs font-mono break-all"
-            >
-              {txHash}
-            </a>
-            <p className="text-xs text-gray-500">
-              Click to view on Monad Explorer
-            </p>
+            {txHash && explorerUrl ? (
+              <>
+                <a
+                  href={explorerUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-400 hover:text-blue-300 text-xs font-mono break-all"
+                >
+                  {formatTxHash(txHash, 10)}
+                </a>
+                <p className="text-xs text-gray-500">View this transaction on Monad Explorer</p>
+              </>
+            ) : (
+              <p className="text-xs text-yellow-300">
+                Transaction submitted to the backend. The on-chain transaction hash is still pending.
+              </p>
+            )}
           </div>
 
           <div className="bg-blue-900 bg-opacity-30 border border-blue-600 p-3 rounded text-sm text-blue-300">
