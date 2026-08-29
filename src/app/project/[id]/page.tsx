@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { getProject } from '@/lib/api'
+import { getProject, TRUSTWORK_PROJECT_ID } from '@/lib/api'
 import { getAuctionPhase, getTimeRemaining, formatUSDC, formatAddress } from '@/lib/utils'
 
 export default function ProjectPage({ params }: { params: Promise<{ id: string }> | { id: string } }) {
@@ -17,7 +17,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
         ? await params
         : params
 
-      const projectId = resolvedParams?.id || 'demo-001'
+      const projectId = resolvedParams?.id || TRUSTWORK_PROJECT_ID
 
       try {
         const data = await getProject(projectId)

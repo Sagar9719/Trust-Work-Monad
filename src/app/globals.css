@@ -26,6 +26,34 @@ html, body {
     @apply px-4 py-2 bg-gray-700 hover:bg-gray-600 border border-gray-600 text-white rounded cursor-pointer transition;
   }
 
+  .wallet-button {
+    @apply inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 active:bg-blue-700 border border-blue-400 text-white rounded-lg cursor-pointer transition-all duration-200 shadow-lg shadow-blue-950/40;
+    min-height: 42px;
+    font-family: inherit;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+
+  .wallet-button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 24px rgb(30 64 175 / 0.35);
+  }
+
+  .wallet-button:focus-visible {
+    @apply outline-none ring-2 ring-blue-300 ring-offset-2 ring-offset-gray-800;
+  }
+
+  .wallet-status-dot {
+    @apply h-2.5 w-2.5 rounded-full bg-blue-200;
+    box-shadow: 0 0 0 3px rgb(147 197 253 / 0.18);
+  }
+
+  .wallet-status-dot-connected {
+    @apply bg-emerald-300;
+    box-shadow: 0 0 0 3px rgb(110 231 183 / 0.18), 0 0 12px rgb(110 231 183 / 0.7);
+  }
+
   .input {
     @apply w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded focus:border-blue-500 focus:outline-none;
   }

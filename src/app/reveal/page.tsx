@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useAccount } from 'wagmi'
-import { revealBid } from '@/lib/api'
+import { revealBid, TRUSTWORK_PROJECT_ID } from '@/lib/api'
 import { calculateCommitmentHash, formatTxHash } from '@/lib/utils'
 import Link from 'next/link'
 
@@ -71,7 +71,7 @@ export default function RevealPage() {
   return (
     <div className="space-y-6 max-w-2xl">
       {/* Back Link */}
-      <Link href="/project/demo-001" className="text-blue-400 hover:text-blue-300 text-sm">
+      <Link href={`/project/${TRUSTWORK_PROJECT_ID}`} className="text-blue-400 hover:text-blue-300 text-sm">
         ← Back to Project
       </Link>
 
@@ -222,7 +222,7 @@ export default function RevealPage() {
           </div>
 
           <div className="pt-4 border-t border-gray-700">
-            <Link href="/project/demo-001">
+            <Link href={`/project/${TRUSTWORK_PROJECT_ID}`}>
               <button className="button w-full">
                 Back to Project
               </button>

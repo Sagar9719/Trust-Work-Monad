@@ -1,10 +1,12 @@
 import Link from 'next/link'
 
+import { TRUSTWORK_PROJECT_ID } from '@/lib/api'
+
 export default function Dashboard() {
   const demoProject = {
-    id: 'demo-001',
-    title: 'Build Spring Boot REST API',
-    description: 'Create a REST API with PostgreSQL integration, JWT authentication, and unit tests',
+    id: TRUSTWORK_PROJECT_ID,
+    title: 'AI-Powered DeFi Analytics Dashboard',
+    description: 'Build an on-chain analytics dashboard for Monad users with wallet insights, risk scoring, and portfolio alerts for institutional traders.',
     budget_usd: 3500,
     status: 'bidding',
     created_at: new Date().toISOString(),

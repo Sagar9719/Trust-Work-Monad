@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useAccount } from 'wagmi'
-import { getProject, fundEscrow } from '@/lib/api'
+import { getProject, fundEscrow, TRUSTWORK_PROJECT_ID } from '@/lib/api'
 import { formatAddress, formatUSDC } from '@/lib/utils'
 import Link from 'next/link'
 
@@ -15,7 +15,7 @@ export default function EscrowPage() {
   const [error, setError] = useState<string | null>(null)
   const [escrowAddress, setEscrowAddress] = useState<string>('')
 
-  const projectId = 'demo-001'
+  const projectId = TRUSTWORK_PROJECT_ID
 
   useEffect(() => {
     loadProject()
@@ -74,7 +74,7 @@ export default function EscrowPage() {
   return (
     <div className="space-y-6 max-w-2xl">
       {/* Back Link */}
-      <Link href="/project/demo-001" className="text-blue-400 hover:text-blue-300 text-sm">
+      <Link href={`/project/${TRUSTWORK_PROJECT_ID}`} className="text-blue-400 hover:text-blue-300 text-sm">
         ← Back to Project
       </Link>
 

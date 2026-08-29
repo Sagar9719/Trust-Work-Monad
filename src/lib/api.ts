@@ -1,6 +1,8 @@
 import axios from 'axios'
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://trustwork-production-dddf.up.railway.app'
+
+export const TRUSTWORK_PROJECT_ID = '08aae2b6-e67e-44b0-81f2-b92559c49b23'
 
 const client = axios.create({
   baseURL: API_BASE,
@@ -14,8 +16,8 @@ function getDemoProject(projectId: string) {
 
   return {
     id: projectId,
-    title: 'Build Spring Boot REST API',
-    description: 'Create a REST API with PostgreSQL integration, JWT authentication, and unit tests',
+    title: 'AI-Powered DeFi Analytics Dashboard',
+    description: 'Build an on-chain analytics dashboard for Monad users with wallet insights, risk scoring, and portfolio alerts for institutional traders.',
     budget_usd: 3500,
     status: 'bidding',
     client_wallet: '0x1234567890abcdef1234567890abcdef12345678',
@@ -53,8 +55,10 @@ export async function createProject(data: {
 
 // Bidding
 export async function submitBidCommitment(data: {
-  auctionId: string
-  commitment_hash: string
+  projectId: string
+  bidderWallet: string
+  amountUsd: number
+  commitmentHash: string
 }) {
   const response = await client.post('/api/bids/commit', data)
   return response.data

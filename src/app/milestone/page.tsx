@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useAccount } from 'wagmi'
-import { getProject, submitMilestone, approveMilestone } from '@/lib/api'
+import { getProject, submitMilestone, approveMilestone, TRUSTWORK_PROJECT_ID } from '@/lib/api'
 import { formatAddress, formatUSDC } from '@/lib/utils'
 import Link from 'next/link'
 
@@ -19,7 +19,7 @@ export default function MilestonePage() {
   const [approved, setApproved] = useState(false)
   const [txHash, setTxHash] = useState<string>('')
 
-  const projectId = 'demo-001'
+  const projectId = TRUSTWORK_PROJECT_ID
 
   useEffect(() => {
     loadProject()
@@ -103,7 +103,7 @@ export default function MilestonePage() {
   return (
     <div className="space-y-6 max-w-2xl">
       {/* Back Link */}
-      <Link href="/project/demo-001" className="text-blue-400 hover:text-blue-300 text-sm">
+      <Link href={`/project/${TRUSTWORK_PROJECT_ID}`} className="text-blue-400 hover:text-blue-300 text-sm">
         ← Back to Project
       </Link>
 

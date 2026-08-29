@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useAccount } from 'wagmi'
-import { submitBidCommitment } from '@/lib/api'
+import { submitBidCommitment, TRUSTWORK_PROJECT_ID } from '@/lib/api'
 import { calculateCommitmentHash, formatTxHash } from '@/lib/utils'
 import Link from 'next/link'
 
@@ -11,7 +11,7 @@ export default function BidPage() {
   const [amount, setAmount] = useState<string>('')
   const [secret, setSecret] = useState<string>('')
   const [commitmentHash, setCommitmentHash] = useState<string>('')
-  const [auctionId, setAuctionId] = useState<string>('demo-001') // Hardcoded for demo
+  const [auctionId, setAuctionId] = useState<string>(TRUSTWORK_PROJECT_ID)
   const [loading, setLoading] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [txHash, setTxHash] = useState<string>('')
@@ -39,8 +39,13 @@ export default function BidPage() {
       return
     }
 
-    if (!isConnected) {
+    if (!isConnected || !address) {
       setError('Please connect your wallet')
+      return
+    }
+
+    if (!amount || Number(amount) <= 0) {
+      setError('Please enter a valid bid amount')
       return
     }
 
@@ -49,17 +54,20 @@ export default function BidPage() {
 
     try {
       const response = await submitBidCommitment({
-        auctionId,
-        commitment_hash: commitmentHash,
+        projectId: auctionId,
+        bidderWallet: address,
+        amountUsd: Number(amount),
+        commitmentHash,
       })
 
-      setTxHash(response.tx_hash)
+      setTxHash(response.txHash || response.tx_hash || '')
       setSubmitted(true)
       setAmount('')
       setSecret('')
       setCommitmentHash('')
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to submit bid')
+      const backendMessage = err.response?.data?.message || err.response?.data?.error
+      setError(backendMessage || 'Failed to submit bid')
       console.error(err)
     } finally {
       setLoading(false)
@@ -74,7 +82,7 @@ export default function BidPage() {
   return (
     <div className="space-y-6 max-w-2xl">
       {/* Back Link */}
-      <Link href="/project/demo-001" className="text-blue-400 hover:text-blue-300 text-sm">
+      <Link href={`/project/${TRUSTWORK_PROJECT_ID}`} className="text-blue-400 hover:text-blue-300 text-sm">
         ← Back to Project
       </Link>
 
@@ -217,7 +225,7 @@ export default function BidPage() {
           </div>
 
           <div className="pt-4 border-t border-gray-700">
-            <Link href="/project/demo-001">
+            <Link href={`/project/${TRUSTWORK_PROJECT_ID}`}>
               <button className="button w-full">
                 Back to Project
               </button>
