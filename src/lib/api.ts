@@ -37,6 +37,8 @@ function normalizeProject(data: any) {
 
   return {
     ...data,
+    uiPhase: data.uiPhase ?? 'AWAITING_FINALIZE',
+    chainProjectId: data.chainProjectId ?? null,
     budget_usd: data.budgetUsd ?? data.budget_usd ?? 0,
     status: String(data.phase || data.status || 'pending').toLowerCase(),
     client_wallet: data.clientWallet ?? data.client_wallet ?? '',
@@ -64,6 +66,11 @@ function normalizeProject(data: any) {
 }
 
 // Projects
+export async function getProjects() {
+  const response = await client.get('/api/projects')
+  return response.data.map(normalizeProject)
+}
+
 export async function getProject(projectId: string) {
   try {
     const response = await client.get(`/api/projects/${projectId}`)
@@ -77,10 +84,20 @@ export async function getProject(projectId: string) {
 export async function createProject(data: {
   title: string
   description: string
-  budget_usd: number
-  auction_duration_minutes: number
+  specUri?: string
+  budgetUsd: number
+  clientWallet: string
+  commitDurationSeconds?: number
+  revealDurationSeconds?: number
+  bidBondWei?: string
+  milestoneBps?: number[]
 }) {
   const response = await client.post('/api/projects', data)
+  return response.data
+}
+
+export async function getConfig() {
+  const response = await client.get('/api/config')
   return response.data
 }
 
@@ -89,6 +106,7 @@ export async function submitBidCommitment(data: {
   projectId: string
   bidderWallet: string
   amountUsd: number
+  salt: string
   commitmentHash: string
 }) {
   const response = await client.post('/api/bids/commit', data)
@@ -97,8 +115,8 @@ export async function submitBidCommitment(data: {
 
 export async function revealBid(data: {
   bidId: string
-  amount: number
-  secret: string
+  amountUsd: number
+  salt: string
 }) {
   const response = await client.post('/api/bids/reveal', data)
   return response.data

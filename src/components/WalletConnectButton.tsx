@@ -1,37 +1,31 @@
 'use client'
 
-import { useAccount } from 'wagmi'
+import { useAccount, useConnect, useDisconnect } from 'wagmi'
 
 export function WalletConnectButton() {
   const { address, isConnected } = useAccount()
+  const { connect, connectors, isPending } = useConnect()
+  const { disconnect } = useDisconnect()
 
   const connectMetaMask = async () => {
-    if (typeof window === 'undefined' || !(window as any).ethereum) {
-      alert('MetaMask is not installed or not available in this browser.')
-      return
-    }
+    const connector = connectors[0]
+    if (connector) connect({ connector })
+  }
 
-    try {
-      const accounts = await (window as any).ethereum.request({
-        method: 'eth_requestAccounts',
-      })
-
-      console.log('Connected wallet accounts:', accounts)
-      window.location.reload()
-    } catch (error) {
-      console.error('Wallet connection failed:', error)
-      alert('Wallet connection was rejected or failed.')
-    }
+  const handleClick = () => {
+    if (isConnected) disconnect()
+    else connectMetaMask()
   }
 
   return (
     <button
-      onClick={connectMetaMask}
+      onClick={handleClick}
+      disabled={isPending}
       className="wallet-button"
-      title={isConnected ? 'Connected wallet' : 'Connect your MetaMask wallet'}
+      title={isConnected ? 'Disconnect wallet' : 'Connect your MetaMask wallet'}
     >
       <span className={`wallet-status-dot ${isConnected ? 'wallet-status-dot-connected' : ''}`} aria-hidden="true" />
-      <span>{isConnected && address ? `${address.slice(0, 6)}...${address.slice(-4)}` : 'Connect Wallet'}</span>
+      <span>{isPending ? 'Connecting...' : isConnected && address ? `${address.slice(0, 6)}...${address.slice(-4)}` : 'Connect Wallet'}</span>
     </button>
   )
 }

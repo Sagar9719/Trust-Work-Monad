@@ -1,16 +1,23 @@
-import Link from 'next/link'
+'use client'
 
-import { TRUSTWORK_PROJECT_ID } from '@/lib/api'
+import { useEffect, useState } from 'react'
+import Link from 'next/link'
+import { getProjects } from '@/lib/api'
 
 export default function Dashboard() {
-  const demoProject = {
-    id: TRUSTWORK_PROJECT_ID,
-    title: 'AI-Powered DeFi Analytics Dashboard',
-    description: 'Build an on-chain analytics dashboard for Monad users with wallet insights, risk scoring, and portfolio alerts for institutional traders.',
-    budget_usd: 3500,
-    status: 'bidding',
-    created_at: new Date().toISOString(),
-  }
+  const [projects, setProjects] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    getProjects()
+      .then(setProjects)
+      .catch((err) => {
+        setError('Unable to load projects from the backend')
+        console.error(err)
+      })
+      .finally(() => setLoading(false))
+  }, [])
 
   return (
     <div className="space-y-8">
@@ -34,39 +41,38 @@ export default function Dashboard() {
         </ul>
       </div>
 
-      {/* Demo Project Card */}
+      {/* Live Projects */}
       <div className="card space-y-4">
-        <div className="flex justify-between items-start">
-          <div>
-            <h3 className="text-xl font-bold">{demoProject.title}</h3>
-            <p className="text-sm text-gray-400 mt-1">{demoProject.description}</p>
-          </div>
-          <span className={`status-badge-pending`}>
-            {demoProject.status.toUpperCase()}
-          </span>
-        </div>
-
-        <div className="grid grid-cols-3 gap-4 text-sm">
-          <div>
-            <p className="text-gray-400">Budget</p>
-            <p className="text-lg font-bold text-green-400">${demoProject.budget_usd}</p>
-          </div>
-          <div>
-            <p className="text-gray-400">Created</p>
-            <p className="text-sm font-mono">{new Date(demoProject.created_at).toLocaleDateString()}</p>
-          </div>
-          <div>
-            <p className="text-gray-400">Status</p>
-            <p className="text-sm font-mono capitalize">{demoProject.status}</p>
-          </div>
-        </div>
-
-        <div className="border-t border-gray-700 pt-4">
-          <Link href={`/project/${demoProject.id}`}>
-            <button className="button">
-              View Project & Bids
-            </button>
-          </Link>
+        <h3 className="text-lg font-bold">Projects</h3>
+        {loading && <p className="text-sm text-gray-400">Loading live projects...</p>}
+        {error && <p className="text-sm text-red-300">{error}</p>}
+        {!loading && !error && projects.length === 0 && (
+          <p className="text-sm text-gray-400">No projects are available.</p>
+        )}
+        <div className="space-y-4">
+          {projects.map((project) => {
+            const canBid = project.uiPhase === 'COMMIT_OPEN'
+            return (
+              <div key={project.id} className="border border-gray-700 bg-gray-900 p-4 rounded space-y-4">
+                <div className="flex flex-wrap justify-between items-start gap-3">
+                  <div>
+                    <h3 className="text-xl font-bold">{project.title}</h3>
+                    <p className="text-sm text-gray-400 mt-1">{project.description}</p>
+                  </div>
+                  <span className={canBid ? 'status-badge-success' : 'status-badge-pending'}>
+                    {String(project.uiPhase || project.phase || 'UNKNOWN').replaceAll('_', ' ')}
+                  </span>
+                </div>
+                <div className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-700 pt-3 text-sm">
+                  <span className="text-gray-400">Budget: <strong className="text-green-400">${project.budget_usd.toLocaleString()}</strong></span>
+                  <div className="flex gap-2">
+                    <Link href={`/project/${project.id}`} className="button-secondary">View Project</Link>
+                    {canBid && <Link href="/bid" className="button">Submit Bid</Link>}
+                  </div>
+                </div>
+              </div>
+            )
+          })}
         </div>
       </div>
 

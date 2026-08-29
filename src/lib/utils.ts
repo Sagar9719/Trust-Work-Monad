@@ -1,4 +1,4 @@
-import { encodePacked, keccak256, toBytes } from 'viem'
+import { encodePacked, encodeAbiParameters, keccak256, parseAbiParameters, toBytes, toHex } from 'viem'
 
 /**
  * Calculate commitment hash for bid
@@ -18,6 +18,26 @@ export function calculateCommitmentHash(amount: number, secret: string): string 
     console.error('Error calculating hash:', error)
     throw new Error('Failed to calculate commitment hash')
   }
+}
+
+export function generateBidSalt(): string {
+  return toHex(crypto.getRandomValues(new Uint8Array(32)))
+}
+
+export function calculateBidCommitmentHash(
+  chainProjectId: number,
+  bidderWallet: string,
+  amountUsd: number,
+  salt: string
+): string {
+  const amountBaseUnits = BigInt(amountUsd) * BigInt(1000000)
+
+  return keccak256(
+    encodeAbiParameters(
+      parseAbiParameters('uint256,address,uint96,bytes32'),
+      [BigInt(chainProjectId), bidderWallet as `0x${string}`, amountBaseUnits, salt as `0x${string}`]
+    )
+  )
 }
 
 /**

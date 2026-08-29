@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { getProject, TRUSTWORK_PROJECT_ID } from '@/lib/api'
-import { getAuctionPhase, getTimeRemaining, formatUSDC, formatAddress } from '@/lib/utils'
+import { getTimeRemaining, formatUSDC, formatAddress } from '@/lib/utils'
 
 export default function ProjectPage({ params }: { params: Promise<{ id: string }> | { id: string } }) {
   const [project, setProject] = useState<any>(null)
@@ -42,15 +42,9 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
     if (!project?.auction) return
 
     const updateCountdown = () => {
-      const phase = getAuctionPhase(
-        project.auction.commit_deadline,
-        project.auction.reveal_deadline
-      )
-
-      const deadline =
-        phase === 'bidding'
-          ? project.auction.commit_deadline
-          : project.auction.reveal_deadline
+      const deadline = project.uiPhase === 'COMMIT_OPEN'
+        ? project.auction.commit_deadline
+        : project.auction.reveal_deadline
 
       const { display } = getTimeRemaining(deadline)
       setCountdown(display)
@@ -80,10 +74,11 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
     )
   }
 
-  const phase = getAuctionPhase(
-    project.auction.commit_deadline,
-    project.auction.reveal_deadline
-  )
+  const phase = project.uiPhase === 'COMMIT_OPEN'
+    ? 'bidding'
+    : project.uiPhase === 'REVEAL_OPEN'
+      ? 'reveal'
+      : 'completed'
 
   return (
     <div className="space-y-6">

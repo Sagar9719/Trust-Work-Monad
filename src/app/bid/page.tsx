@@ -2,43 +2,66 @@
 
 import { useEffect, useState } from 'react'
 import { useAccount } from 'wagmi'
-import { getProject, submitBidCommitment, TRUSTWORK_PROJECT_ID } from '@/lib/api'
-import { calculateCommitmentHash, formatTxHash, getAuctionPhase, getExplorerUrl } from '@/lib/utils'
+import { getProjects, submitBidCommitment, TRUSTWORK_PROJECT_ID } from '@/lib/api'
+import { calculateBidCommitmentHash, formatTxHash, generateBidSalt, getExplorerUrl } from '@/lib/utils'
 import Link from 'next/link'
 
 export default function BidPage() {
   const { address, isConnected } = useAccount()
   const [amount, setAmount] = useState<string>('')
-  const [secret, setSecret] = useState<string>('')
+  const [salt, setSalt] = useState<string>('')
   const [commitmentHash, setCommitmentHash] = useState<string>('')
   const [auctionId, setAuctionId] = useState<string>(TRUSTWORK_PROJECT_ID)
+  const [chainProjectId, setChainProjectId] = useState<number | null>(null)
   const [loading, setLoading] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [txHash, setTxHash] = useState<string>('')
   const [explorerUrl, setExplorerUrl] = useState<string>('')
   const [error, setError] = useState<string | null>(null)
-  const [bidWindowOpen, setBidWindowOpen] = useState(true)
+  const [bidWindowOpen, setBidWindowOpen] = useState(false)
+  const [checkingBidWindow, setCheckingBidWindow] = useState(true)
 
   useEffect(() => {
-    getProject(TRUSTWORK_PROJECT_ID).then((project) => {
-      const phase = getAuctionPhase(
-        project.auction.commit_deadline,
-        project.auction.reveal_deadline
-      )
-      setBidWindowOpen(phase === 'bidding')
-    }).catch((err) => {
-      console.error('Failed to check bid window:', err)
-    })
+    const checkBidWindow = () => {
+      setCheckingBidWindow(true)
+      getProjects().then((projects) => {
+        const project = projects.find((candidate: any) => candidate.uiPhase === 'COMMIT_OPEN')
+        setBidWindowOpen(Boolean(project))
+        if (project) {
+          setAuctionId(project.id)
+          setChainProjectId(project.chainProjectId ?? null)
+        }
+      }).catch((err) => {
+        setBidWindowOpen(false)
+        console.error('Failed to check bid window:', err)
+      }).finally(() => setCheckingBidWindow(false))
+    }
+
+    checkBidWindow()
+    const interval = setInterval(checkBidWindow, 10000)
+    return () => clearInterval(interval)
   }, [])
 
   const handleCalculateHash = () => {
-    if (!amount || !secret) {
-      setError('Please enter both amount and secret')
+    if (!bidWindowOpen) {
+      setError('The commit window is closed. New bids cannot be submitted for this project.')
+      return
+    }
+
+    if (!amount || Number(amount) <= 0) {
+      setError('Please enter a valid bid amount')
+      return
+    }
+
+    if (!address || !chainProjectId) {
+      setError('Connect your wallet and wait for the project details to load')
       return
     }
 
     try {
-      const hash = calculateCommitmentHash(parseInt(amount), secret)
+      const generatedSalt = generateBidSalt()
+      const hash = calculateBidCommitmentHash(chainProjectId, address, Number(amount), generatedSalt)
+      setSalt(generatedSalt)
       setCommitmentHash(hash)
       setError(null)
     } catch (err) {
@@ -76,6 +99,7 @@ export default function BidPage() {
         projectId: auctionId,
         bidderWallet: address,
         amountUsd: Number(amount),
+        salt,
         commitmentHash,
       })
 
@@ -84,7 +108,6 @@ export default function BidPage() {
       setExplorerUrl(response.explorer || (submittedTxHash ? getExplorerUrl(submittedTxHash) : ''))
       setSubmitted(true)
       setAmount('')
-      setSecret('')
       setCommitmentHash('')
     } catch (err: any) {
       const backendMessage = err.response?.data?.message || err.response?.data?.error
@@ -93,11 +116,6 @@ export default function BidPage() {
     } finally {
       setLoading(false)
     }
-  }
-
-  const generateRandomSecret = () => {
-    const random = Math.random().toString(36).substring(2, 15)
-    setSecret(random)
   }
 
   return (
@@ -111,9 +129,9 @@ export default function BidPage() {
       <div className="card space-y-2">
         <h2 className="text-2xl font-bold">Submit Bid</h2>
         <p className="text-gray-400 text-sm">
-          Commit phase: Submit your bid amount and secret phrase. Your actual bid amount is hidden.
+          Commit phase: Submit your bid amount. Your actual bid amount is hidden until reveal.
         </p>
-        {!bidWindowOpen && (
+        {!checkingBidWindow && !bidWindowOpen && (
           <p className="text-yellow-300 text-sm border-t border-gray-700 pt-2">
             This project&apos;s commit window is closed. Watch for a new active project to submit a bid.
           </p>
@@ -149,29 +167,23 @@ export default function BidPage() {
             <p className="text-xs text-gray-500 mt-1">Enter your bid amount in USD</p>
           </div>
 
-          {/* Secret Phrase Input */}
+          {/* Salt */}
           <div className="form-group">
-            <label htmlFor="secret" className="label">
-              Secret Phrase
+            <label htmlFor="salt" className="label">
+              Bid Salt
             </label>
             <div className="flex gap-2">
               <input
-                id="secret"
+                id="salt"
                 type="text"
-                value={secret}
-                onChange={(e) => setSecret(e.target.value)}
-                placeholder="e.g., my-random-secret-xyz"
+                value={salt}
+                readOnly
+                placeholder="Generated when you calculate the commitment"
                 className="input flex-1"
               />
-              <button
-                onClick={generateRandomSecret}
-                className="button-secondary px-3 py-2 whitespace-nowrap"
-              >
-                Generate
-              </button>
             </div>
             <p className="text-xs text-gray-500 mt-1">
-              Random secret to prevent bid manipulation. Store this safely!
+              A secure 32-byte salt is generated locally. Store it safely for the reveal step.
             </p>
           </div>
 
@@ -195,9 +207,10 @@ export default function BidPage() {
             {!commitmentHash ? (
               <button
                 onClick={handleCalculateHash}
-                className="button w-full"
+                disabled={checkingBidWindow || !bidWindowOpen}
+                className={`button w-full ${checkingBidWindow || !bidWindowOpen ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
-                Calculate Commitment Hash
+                {checkingBidWindow ? 'Checking Bid Window...' : bidWindowOpen ? 'Calculate Commitment Hash' : 'Commit Window Closed'}
               </button>
             ) : (
               <button
@@ -214,10 +227,10 @@ export default function BidPage() {
           <div className="bg-gray-900 p-3 rounded border border-gray-700 text-xs text-gray-400 space-y-2">
             <p className="font-bold text-white">How commit-reveal works:</p>
             <ol className="space-y-1 ml-4 list-decimal">
-              <li>You provide amount + secret</li>
-              <li>Frontend calculates keccak256(amount + secret)</li>
+              <li>You provide an amount</li>
+              <li>Frontend generates a secure salt and calculates the commitment</li>
               <li>Only hash is submitted on-chain (bid hidden)</li>
-              <li>During reveal phase, you provide amount + secret again</li>
+              <li>During reveal phase, you provide amount + salt again</li>
               <li>Smart contract verifies the hash matches</li>
             </ol>
           </div>
@@ -249,10 +262,10 @@ export default function BidPage() {
           </div>
 
           <div className="bg-blue-900 bg-opacity-30 border border-blue-600 p-3 rounded text-sm text-blue-300">
-            <p className="font-bold mb-2">📝 Important: Save Your Secret!</p>
-            <p className="font-mono bg-gray-900 p-2 rounded mb-2 break-all">{secret}</p>
+            <p className="font-bold mb-2">📝 Important: Save Your Salt!</p>
+            <p className="font-mono bg-gray-900 p-2 rounded mb-2 break-all">{salt}</p>
             <p>
-              You'll need this secret to reveal your bid during the reveal phase. Keep it safe!
+              You&apos;ll need this salt to reveal your bid during the reveal phase. Keep it safe!
             </p>
           </div>
 
