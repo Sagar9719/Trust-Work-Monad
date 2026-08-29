@@ -8,6 +8,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.2-blue)](https://www.typescriptlang.org/)
 [![Next.js](https://img.shields.io/badge/Next.js-14-black)](https://nextjs.org/)
 [![React](https://img.shields.io/badge/React-19-61dafb)](https://react.dev/)
+[![Live Demo](https://img.shields.io/badge/demo-live-brightgreen)](https://trust-work-monad.vercel.app/)
 
 ---
 
@@ -22,6 +23,15 @@ Instead of trusting a platform or company:
 - **Payments** release automatically when work is approved ✓
 
 **No middleman. Just code. Just math. Just trust in the blockchain.**
+
+---
+
+## 🚀 Live Demo
+
+**🔗 Frontend:** https://trust-work-monad.vercel.app/  
+**🔗 Backend API:** trustwork-production-dddf.up.railway.app  
+**🔗 Network:** Monad Testnet (Chain ID: 10143)  
+**🔗 Explorer:** https://monadexplorer.com
 
 ---
 
@@ -118,7 +128,7 @@ cp .env.example .env.local
 Update `.env.local`:
 ```env
 # Backend API
-NEXT_PUBLIC_API_URL=http://localhost:8080
+NEXT_PUBLIC_API_URL=https://trustwork-production-dddf.up.railway.app
 
 # Monad Testnet RPC
 NEXT_PUBLIC_RPC_URL=https://testnet-rpc.monad.io
@@ -260,7 +270,7 @@ trustwork-frontend/
 
 ### Backend API Base URL
 ```
-http://localhost:8080
+https://trustwork-production-dddf.up.railway.app
 ```
 
 ### Key Endpoints
@@ -386,40 +396,24 @@ User Flow:
 
 ## 🚀 Deployment
 
-### Frontend Deployment (Vercel)
+### Frontend (Vercel) ✅
 
-```bash
-# Install Vercel CLI
-npm install -g vercel
-
-# Deploy
-vercel
-
-# Set environment variables in Vercel dashboard
-NEXT_PUBLIC_API_URL=https://api.trustwork.io
-NEXT_PUBLIC_AUCTION_CONTRACT_ADDRESS=0x...
-NEXT_PUBLIC_ESCROW_CONTRACT_ADDRESS=0x...
-NEXT_PUBLIC_USDC_CONTRACT_ADDRESS=0x...
+```
+🔗 Live: https://trust-work-monad.vercel.app/
+Environment Variables:
+- NEXT_PUBLIC_API_URL=https://trustwork-production-dddf.up.railway.app
+- NEXT_PUBLIC_AUCTION_CONTRACT_ADDRESS=0x...
+- NEXT_PUBLIC_ESCROW_CONTRACT_ADDRESS=0x...
+- NEXT_PUBLIC_USDC_CONTRACT_ADDRESS=0x...
 ```
 
-### Backend Deployment (Cloud Run / Railway / AWS)
+### Backend (Railway) ✅
 
-```bash
-# Build Docker image
-docker build -t trustwork-backend .
-
-# Deploy to Cloud Run
-gcloud run deploy trustwork-backend --image trustwork-backend
-
-# Update frontend API URL
-NEXT_PUBLIC_API_URL=https://trustwork-backend-xxx.run.app
 ```
-
-### Smart Contracts (Monad Mainnet - Future)
-
-```bash
-# Deploy to Monad mainnet
-npx hardhat run scripts/deploy.js --network monadMainnet
+🔗 API: https://trustwork-production-dddf.up.railway.app
+Deployed on: Railway
+Database: PostgreSQL (Railway)
+Environment: Production
 ```
 
 ---
@@ -432,7 +426,7 @@ npx hardhat run scripts/deploy.js --network monadMainnet
 |-------|-------|----------|
 | "Cannot connect to MetaMask" | Wallet not installed | Install MetaMask extension |
 | "Wrong network" | MetaMask on wrong chain | Switch to Monad Testnet |
-| "API not found" | Backend not running | Start: `mvn spring-boot:run` |
+| "API not found" | Backend not running | Use production URL or start local |
 | "Hash mismatch" | Re-entered wrong secret | Copy-paste exact amount + secret |
 | "Insufficient gas" | Need MON for transactions | Claim from faucet |
 | "USDC approval failed" | Not approved token | Approve USDC first |
@@ -511,6 +505,7 @@ git push origin feature/your-feature
 - [x] Escrow funding
 - [x] Milestone-based payments
 - [x] Wallet integration (MetaMask)
+- [x] Deployed on Monad Testnet
 
 ### Phase 2: Core Features 📋
 - [ ] Create project page
@@ -549,15 +544,6 @@ MIT License - see [LICENSE](./LICENSE) file for details.
 
 ---
 
-## 📞 Support
-
-- **Issues:** [GitHub Issues](https://github.com/ManikGrewal/TrustWork/issues)
-- **Discussions:** [GitHub Discussions](https://github.com/ManikGrewal/TrustWork/discussions)
-- **Twitter:** [@TrustWorkHQ](https://twitter.com/trustworkhq)
-- **Discord:** [Join our server](#)
-
----
-
 ## 💡 Vision
 
 > **"Replace platform trust with blockchain trust. Empower freelancers. Protect clients. Scale globally."**
@@ -576,6 +562,6 @@ Join us in building the future of work.
 
 ### Built with ❤️ for the Monad ecosystem
 
-[⭐ Star us on GitHub](https://github.com/ManikGrewal/TrustWork) | [🚀 Live Demo](https://trustwork.vercel.app) | [📖 Docs](./docs)
+[⭐ Star us on GitHub](https://github.com/ManikGrewal/TrustWork) | [🚀 Live Demo](https://trust-work-monad.vercel.app/) | [📖 Docs](./docs)
 
 </div>
