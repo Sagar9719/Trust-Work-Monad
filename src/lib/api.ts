@@ -32,11 +32,42 @@ function getDemoProject(projectId: string) {
   }
 }
 
+function normalizeProject(data: any) {
+  if (!data || data.auction) return data
+
+  return {
+    ...data,
+    budget_usd: data.budgetUsd ?? data.budget_usd ?? 0,
+    status: String(data.phase || data.status || 'pending').toLowerCase(),
+    client_wallet: data.clientWallet ?? data.client_wallet ?? '',
+    auction: {
+      commit_deadline: data.commitDeadline ?? data.commit_deadline ?? 0,
+      reveal_deadline: data.revealDeadline ?? data.reveal_deadline ?? 0,
+      winner_id: data.winnerWallet ?? data.winner_id ?? null,
+      finalized: data.uiPhase === 'COMPLETED' || Boolean(data.finalized),
+    },
+    bids: (data.bids || []).map((bid: any) => ({
+      ...bid,
+      id: bid.bidId ?? bid.id,
+      bidder_id: bid.bidderWallet ?? bid.bidder_id ?? '',
+      revealed_amount: bid.revealedAmountUsd ?? bid.revealed_amount,
+      is_ai_agent: bid.isAiAgent ?? bid.is_ai_agent ?? false,
+    })),
+    milestone: data.milestone || (data.milestones || [])[0] || null,
+    escrow: data.escrow
+      ? {
+          ...data.escrow,
+          smart_contract_tx_hash: data.escrow.smartContractTxHash ?? data.escrow.smart_contract_tx_hash,
+        }
+      : null,
+  }
+}
+
 // Projects
 export async function getProject(projectId: string) {
   try {
     const response = await client.get(`/api/projects/${projectId}`)
-    return response.data
+    return normalizeProject(response.data)
   } catch (error) {
     console.warn(`Falling back to demo project data for ${projectId}:`, error)
     return getDemoProject(projectId)

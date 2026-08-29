@@ -64,7 +64,7 @@ export default function Dashboard() {
         <div className="border-t border-gray-700 pt-4">
           <Link href={`/project/${demoProject.id}`}>
             <button className="button">
-              View Project & Bid
+              View Project & Bids
             </button>
           </Link>
         </div>
